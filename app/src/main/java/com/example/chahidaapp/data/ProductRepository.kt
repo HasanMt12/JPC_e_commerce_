@@ -1,7 +1,8 @@
 package com.example.chahidaapp.data
 
 import com.example.chahidaapp.data.api.RetrofitClient
-import com.example.yourappname.data.model.ProductBaseResponse
+import com.example.chahidaapp.data.model.CategoryResponse
+import com.example.chahidaapp.data.model.ProductBaseResponse
 
 
 class ProductRepository {
@@ -9,5 +10,9 @@ class ProductRepository {
 
     suspend fun fetchProducts(): ProductBaseResponse {
         return apiService.getProducts()
+    }
+
+    suspend fun fetchCategories(): CategoryResponse {
+        return apiService.getCategories()
     }
 }

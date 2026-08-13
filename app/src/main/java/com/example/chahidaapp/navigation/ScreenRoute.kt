@@ -1,3 +1,5 @@
+package com.example.chahidaapp.navigation
+
 // navigation/ScreenRoute.kt
 sealed class ScreenRoute(val route: String) {
     object Home : ScreenRoute("home_screen")

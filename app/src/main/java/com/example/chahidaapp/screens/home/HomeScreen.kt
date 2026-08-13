@@ -1,65 +1,142 @@
 package com.example.chahidaapp.screens.home
 
-import androidx.compose.foundation.ExperimentalFoundationApi
+import com.example.chahidaapp.components.HeroImageBanner
+import com.example.chahidaapp.components.OrganicProductCard
+import com.example.chahidaapp.components.ProductImage
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.chahidaapp.components.ProductImage
-import com.example.yourappname.data.model.ProductItem
+import com.example.chahidaapp.data.model.ApiCategory
+import com.example.chahidaapp.data.model.ProductItem
 
-import kotlinx.coroutines.delay
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel(),
-    onProductClick: (String) -> Unit
+    onProductClick: (String) -> Unit,
+    onAddToCartWithCoords: (ProductItem, LayoutCoordinates) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var searchQuery by remember { mutableStateOf("") }
 
-    Box(modifier = modifier.fillMaxSize()) {
-        when (val state = uiState) {
-            is HomeUiState.Loading -> {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
+        // 🌟 টপবার: মেনু, সার্চ বার এবং হার্ট (Favourite) আইকন
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            IconButton(
+                onClick = { /* Open Menu Drawer */ },
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(Color(0xFFF5F6FA), CircleShape)
+            ) {
+                Icon(Icons.Default.Menu, contentDescription = "Menu", tint = Color.Black)
             }
-            is HomeUiState.Success -> {
-                HomeScreenContent(
-                    products = state.products,
-                    onProductClick = onProductClick
-                )
+
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("কী খুঁজছেন?", color = Color.Gray, fontSize = 14.sp) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.Gray) },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(46.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF3F51B5),
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedContainerColor = Color(0xFFF5F6FA),
+                    unfocusedContainerColor = Color(0xFFF5F6FA)
+                ),
+                singleLine = true
+            )
+
+            IconButton(
+                onClick = { /* Open Favourites Screen */ },
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(Color(0xFFF5F6FA), CircleShape)
+            ) {
+                Icon(Icons.Default.FavoriteBorder, contentDescription = "Favourite", tint = Color.Black)
             }
-            is HomeUiState.Error -> {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(text = state.errorMessage, color = Color.Red)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = { viewModel.loadProducts() }) {
-                        Text(text = "Try Again")
+        }
+
+        // মেইন ইউজার ইন্টারফেস স্টেট
+        Box(modifier = Modifier.fillMaxSize()) {
+            when (val state = uiState) {
+                is HomeUiState.Loading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+                is HomeUiState.Success -> {
+                    // 🔍 লাইভ সার্চ ফিল্টার লজিক
+                    val filteredProducts = remember(searchQuery, state.products) {
+                        if (searchQuery.isEmpty()) {
+                            state.products
+                        } else {
+                            state.products.filter { product ->
+                                product.title.contains(searchQuery, ignoreCase = true) ||
+                                        product.categoryName.contains(searchQuery, ignoreCase = true)
+                            }
+                        }
+                    }
+
+                    HomeScreenContent(
+                        products = filteredProducts,
+                        categories = state.categories,
+                        onProductClick = onProductClick,
+                        onAddToCartWithCoords = onAddToCartWithCoords
+                    )
+                }
+                is HomeUiState.Error -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(text = state.errorMessage, color = Color.Red)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = { viewModel.loadHomeData() }) {
+                            Text(text = "Try Again")
+                        }
                     }
                 }
             }
@@ -70,184 +147,117 @@ fun HomeScreen(
 @Composable
 fun HomeScreenContent(
     products: List<ProductItem>,
-    onProductClick: (String) -> Unit
+    categories: List<ApiCategory>,
+    onProductClick: (String) -> Unit,
+    onAddToCartWithCoords: (ProductItem, LayoutCoordinates) -> Unit
 ) {
-    // API responses theke banner features extract list filter setup
-    val bannerProducts = products.take(5) // Dynamic sample setup take first 5 product images to roll slides
+    val bannerProducts = products.take(5)
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(12.dp),
+        contentPadding = PaddingValues(start = 16.dp, bottom = 100.dp, end = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Section 1: Dynamic Banner Carousel Section (Full width spanning 2 columns layout)
         if (bannerProducts.isNotEmpty()) {
             item(span = { GridItemSpan(2) }) {
                 HeroImageBanner(bannerProducts = bannerProducts, onProductClick = onProductClick)
             }
         }
 
-        // Section 2: Header Text Title
+        // 📂 ডাইনামিক লাইভ ক্যাটাগরি লিস্ট
         item(span = { GridItemSpan(2) }) {
-            Text(
-                text = "আমাদের প্রোডাক্ট সমূহ",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF2E7D32), // Organic Green color style
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-        }
-
-        // Section 3: Dynamic Product Listing
-        items(products) { product ->
-            OrganicProductCard(product = product, onProductClick = onProductClick)
-        }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun HeroImageBanner(
-    bannerProducts: List<ProductItem>,
-    onProductClick: (String) -> Unit
-) {
-    val pagerState = rememberPagerState(pageCount = { bannerProducts.size })
-
-    // Automatic auto-scroll interval layout logic state validation
-    LaunchedEffect(key1 = pagerState.currentPage) {
-        delay(3500) // Scroll dynamics trigger transition slide interval
-        val nextPage = (pagerState.currentPage + 1) % pagerState.pageCount
-        pagerState.animateScrollToPage(nextPage)
-    }
-
-    Card(
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(180.dp)
-    ) {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize()
-        ) { page ->
-            val product = bannerProducts[page]
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clickable { onProductClick(product.id) }
-            ) {
-                ProductImage(
-                    imageUrl = product.imageUrl,
-                    modifier = Modifier.fillMaxSize()
-                )
-                // Dark shade backdrop overlay for readable text labels
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.35f))
-                )
+            Column(modifier = Modifier.padding(vertical = 8.dp)) {
                 Text(
-                    text = product.title,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(16.dp)
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun OrganicProductCard(
-    product: ProductItem,
-    onProductClick: (String) -> Unit
-) {
-    Card(
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        onClick = { onProductClick(product.id) },
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(260.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(130.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(Color(0xFFF5F5F5)),
-                contentAlignment = Alignment.Center
-            ) {
-                ProductImage(
-                    imageUrl = product.imageUrl,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-
-            Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                Text(
-                    text = product.categoryName,
-                    fontSize = 10.sp,
-                    color = Color.Gray,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = product.title,
-                    fontSize = 14.sp,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
+                    text = "Categories",
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black
                 )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(categories) { category ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .width(68.dp)
+                                .clickable { /* Category filter logic */ }
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(60.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFF5F6FA)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (category.photo.isNotEmpty()) {
+                                    ProductImage(
+                                        imageUrl = category.photo,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(CircleShape)
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.AddCircle,
+                                        contentDescription = category.name,
+                                        tint = Color.LightGray,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = category.name,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.Black,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
             }
+        }
 
-            // Variants theke base low minimum price filter display text logic mapping
-            val basePrice = product.variants.firstOrNull()?.price ?: 0.0
-            val unitWeightName = product.variants.firstOrNull()?.name ?: ""
-
+        item(span = { GridItemSpan(2) }) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = "৳${basePrice.toInt()}",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = Color(0xFFE65100)
-                    )
-                    Text(
-                        text = unitWeightName,
-                        fontSize = 11.sp,
-                        color = Color.DarkGray
-                    )
-                }
-
-                Button(
-                    onClick = { onProductClick(product.id) },
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
-                    shape = RoundedCornerShape(4.dp),
-                    modifier = Modifier.height(30.dp)
-                ) {
-                    Text(text = "কিনুন", fontSize = 11.sp, color = Color.White)
-                }
+                Text(
+                    text = "Flash Deals for You",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+                Text(
+                    text = "See All",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF3F51B5)
+                )
             }
+        }
+
+        items(products) { product ->
+            OrganicProductCard(
+                product = product,
+                onProductClick = onProductClick,
+                onAddToCart = { item, coords ->
+                    onAddToCartWithCoords(item, coords)
+                }
+            )
         }
     }
 }

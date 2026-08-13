@@ -29,7 +29,7 @@ fun ProductImage(
  */
 @Composable
 fun HtmlText(
-    htmlDescription: String,
+    htmlDescription: String?,
     modifier: Modifier = Modifier
 ) {
     AndroidView(
@@ -38,8 +38,8 @@ fun HtmlText(
             TextView(context)
         },
         update = { textView ->
-
-            textView.text = HtmlCompat.fromHtml(htmlDescription, HtmlCompat.FROM_HTML_MODE_COMPACT)
+            val description = htmlDescription ?: ""
+            textView.text = HtmlCompat.fromHtml(description, HtmlCompat.FROM_HTML_MODE_COMPACT)
         }
     )
 }
