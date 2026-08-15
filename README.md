@@ -34,4 +34,11 @@ Chahida is a modern, high-performance Android application for organic product sh
 4. Run on an emulator or physical device.
 
 ---
-*Created with ❤️ for Chahida*
+## Getting Started
+1. Clone the repository.
+2. Open in Android Studio.
+3. Sync Gradle dependencies.
+4. Run on an emulator or physical device.
+
+---
+*Created with ❤️ by HasanMt* — Visit [hasanmahmud.online](https://hasanmahmud.online)*
