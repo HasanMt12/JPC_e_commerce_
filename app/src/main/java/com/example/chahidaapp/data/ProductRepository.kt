@@ -15,4 +15,12 @@ class ProductRepository {
     suspend fun fetchCategories(): CategoryResponse {
         return apiService.getCategories()
     }
+
+    suspend fun fetchFaqs(): com.example.chahidaapp.data.model.FaqResponse {
+        return apiService.getFaqs()
+    }
+
+    suspend fun fetchWebsiteInfo(): com.example.chahidaapp.data.model.WebsiteInfoResponse {
+        return apiService.getWebsiteInfo()
+    }
 }

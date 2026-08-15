@@ -36,11 +36,12 @@ fun OrganicProductCard(
     val interactionSource = remember { MutableInteractionSource() }
 
     // Premium Organic Color Palette
-    val primaryGreen = Color(0xFF2E7D32)
+    val primaryGold = Color(0xFFE1A200)
     val lightGreenBg = Color(0xFFF1F8F4)
     val cardBorderColor = Color(0xFFE8ECE9)
-    val textDark = Color(0xFF1C211D)
+    val textDark = Color(0xFF171512)
     val textMuted = Color(0xFF6B7280)
+    val priceColor = Color(0xFFEC003F)
 
     Card(
         shape = RoundedCornerShape(20.dp),
@@ -92,7 +93,7 @@ fun OrganicProductCard(
                         text = "ORGANIC",
                         fontSize = 8.sp,
                         fontWeight = FontWeight.Bold,
-                        color = primaryGreen,
+                        color = primaryGold,
                         letterSpacing = 0.5.sp
                     )
                 }
@@ -108,7 +109,7 @@ fun OrganicProductCard(
                 Text(
                     text = product.categoryName.uppercase(),
                     fontSize = 10.sp,
-                    color = primaryGreen,
+                    color = primaryGold,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 0.5.sp
                 )
@@ -140,7 +141,7 @@ fun OrganicProductCard(
                         text = "৳${basePrice.toInt()}",
                         fontSize = 17.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        color = textDark
+                        color = priceColor
                     )
                     if (unitWeightName.isNotEmpty()) {
                         Text(
@@ -155,7 +156,7 @@ fun OrganicProductCard(
                 // 🛒 Gorgeous Premium "Add to Cart" Button
                 Card(
                     shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = primaryGreen),
+                    colors = CardDefaults.cardColors(containerColor = primaryGold),
                     elevation = CardDefaults.cardElevation(
                         defaultElevation = 2.dp,
                         pressedElevation = 5.dp

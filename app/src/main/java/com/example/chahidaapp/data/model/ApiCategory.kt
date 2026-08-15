@@ -11,5 +11,6 @@ data class ApiCategory(
     @SerializedName("_id") val id: String,
     @SerializedName("name") val name: String,
     @SerializedName("description") val description: String,
-    @SerializedName("photo") val photo: String
+    @SerializedName("photo") val photo: String,
+    @SerializedName("hidden") val hidden: Boolean = false
 )
